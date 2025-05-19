@@ -34,6 +34,36 @@ run_limma_dmp <- function(beta, pheno, covars, group_names, comp_name, out_dir, 
   dir.create(out_subdir, showWarnings = FALSE, recursive = TRUE)
   write.csv(res, file = file.path(out_subdir, paste0(comp_name, "_DMP_results.csv")), row.names = TRUE)
   
-  # Return only results (plotting can be handled in main script if desired)
+
+  # Plotting as before (reuses your plotting code)
+  if (nrow(res) > 0) {
+    volcano_plot <- EnhancedVolcano(
+      res, lab = rownames(res),
+      x = "deltaBeta", y = "adj.P.Val",
+      title = paste0(comp_name, " Differential Methylation"),
+      pCutoff = 0.1, FCcutoff = 0, xlim = c(-0.3, 0.3), ylim = c(0, 10),
+      col = c("grey30", "forestgreen", "royalblue", "red2"), legendPosition = "right"
+    )
+    ggsave(file.path(out_subdir, paste0(comp_name, "_volcano.png")), plot = volcano_plot, width = 8, height = 6)
+    hist_adj <- ggplot(res, aes(x = adj.P.Val)) +
+      geom_histogram(binwidth = 0.01, fill = "skyblue", color = "black") +
+      theme_minimal() + ggtitle(paste(comp_name, "Distribution of adj.P.Val")) + xlab("adj.P.Val") + ylab("Frequency")
+    ggsave(file.path(out_subdir, paste0(comp_name, "_adj_pvalue_histogram.png")), hist_adj, width = 8, height = 6)
+    hist_raw <- ggplot(res, aes(x = P.Value)) +
+      geom_histogram(binwidth = 0.01, fill = "lightcoral", color = "black") +
+      theme_minimal() + ggtitle(paste(comp_name, "Histogram of Raw P-values")) + xlab("P.Value") + ylab("Frequency")
+    ggsave(file.path(out_subdir, paste0(comp_name, "_raw_pvalue_histogram.png")), hist_raw, width = 8, height = 6)
+    density_plot <- ggplot(res, aes(x = deltaBeta)) +
+      geom_density(fill = "lightblue") + theme_minimal() + ggtitle(paste(comp_name, "Density of deltaBeta")) + xlab("deltaBeta") + ylab("Density")
+    ggsave(file.path(out_subdir, paste0(comp_name, "_deltaBeta_density.png")), density_plot, width = 8, height = 6)
+    # QQ plot
+    res$logP <- -log10(res$P.Value)
+    qq_plot <- ggplot(res, aes(sample = logP)) +
+      stat_qq(distribution = qunif) +
+      geom_abline(slope = 1, intercept = 0, color = "red", linetype = "dashed") +
+      theme_minimal() + ggtitle(paste(comp_name, "QQ Plot of -log10 Raw P-values")) +
+      xlab("Theoretical Quantiles (-log10)") + ylab("Sample Quantiles (-log10)")
+    ggsave(file.path(out_subdir, paste0(comp_name, "_qqplot_raw_pvalues.png")), qq_plot, width = 8, height = 6)
+  }
   return(res)
 }
