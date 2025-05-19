@@ -13,7 +13,16 @@ run_limma_dmp <- function(beta, pheno, covars, group_names, comp_name, out_dir, 
   design <- model.matrix(~ pheno_used + ., data = covars_used)
   message(sprintf("[%s] Running: %s vs %s | Samples: %d | Probes: %d", 
     comp_name, group_names[1], group_names[2], n_samples, nrow(beta)))
+  
+  #Maybe in the future do that for avoid coefficient =2 
+  #group_coef <- which(colnames(design) == "pheno_used" | colnames(design) == paste0("pheno_used", group_names[1]))
+  #fit <- limma::lmFit(beta_used, design)
+  #fit <- limma::eBayes(fit)
+  #res <- limma::topTable(fit, coef = group_coef, number = Inf, sort.by = "none")
+  
 
+
+  
   fit <- limma::lmFit(beta_used, design)
   fit <- limma::eBayes(fit)
   res <- limma::topTable(fit, coef = 2, number = Inf, sort.by = "none")
